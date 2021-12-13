@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">ProjectNote</string>
+    <string name="note_text">note_text</string>
+    <string name="title">title</string>
+    <string name="description">description</string>
+    <string name="text_empty">Заголовок или содержание не заполнено</string>
+    <string name="saved">Сохранено!</string>
+
+</resources>
