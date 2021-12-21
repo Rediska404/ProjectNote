@@ -2,6 +2,7 @@ package com.example.projectnote;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
@@ -14,7 +15,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
 import com.example.projectnote.adapter.ListItem;
+import com.example.projectnote.db.AppExecuter;
 import com.example.projectnote.db.MyConstants;
 import com.example.projectnote.db.MyDbManager;
 
@@ -22,12 +25,13 @@ public class EditActivity extends AppCompatActivity {
     private  EditText Title, Description;
     private MyDbManager myDbManager;
     private ImageView imNewImage;
-    //private ImageButton imEditImage, imDeleteImage;
+    private ImageButton imEditImage, imDeleteImage;
     private FloatingActionButton fbAddImage;
     private ConstraintLayout imageContainer;
     private final int PICK_IMAGE_CODE = 123;
     private  String tempUri = "empty";
     private boolean isEditState = true;
+    private  ListItem item;
 
 
     @Override
@@ -53,6 +57,7 @@ public class EditActivity extends AppCompatActivity {
 
             tempUri = data.getData().toString();
             imNewImage.setImageURI(data.getData());
+            getContentResolver().takePersistableUriPermission(data.getData(), Intent.FLAG_GRANT_READ_URI_PERMISSION);
         }
     }
 
@@ -63,26 +68,37 @@ public class EditActivity extends AppCompatActivity {
         fbAddImage = findViewById(R.id.fbAddImage);
         myDbManager = new MyDbManager( this);
         imNewImage = findViewById(R.id.imNewImage);
+        imEditImage = findViewById(R.id.imEditImage);
+        imDeleteImage = findViewById(R.id.imDeleteImage);
     }
 
     private void getMyIntents() {
         Intent i = getIntent();
         if(i != null) {
 
-            ListItem item = (ListItem) i.getSerializableExtra(MyConstants.LIST_ITEM_INTENT);
+            item = (ListItem) i.getSerializableExtra(MyConstants.LIST_ITEM_INTENT);
+
             isEditState = i.getBooleanExtra(MyConstants.EDIT_STATE, true);
 
             if(!isEditState) {
 
                 Title.setText(item.getTitle());
                 Description.setText(item.getDesc());
+
+                if (!item.getUri().equals("empty")){
+                    tempUri = item.getUri();
+                    imageContainer.setVisibility(View.VISIBLE);
+                    imNewImage.setImageURI(Uri.parse(item.getUri()));
+                    imDeleteImage.setVisibility(View.GONE);
+                    imEditImage.setVisibility(View.GONE);
+                }
             }
         }
     }
 
     public void onClickSave(View view) {
-        String title = Title.getText().toString();
-        String description = Description.getText().toString();
+        final String title = Title.getText().toString();
+        final String description = Description.getText().toString();
 
         if (title.equals("") || description.equals("")) {
 
@@ -90,10 +106,26 @@ public class EditActivity extends AppCompatActivity {
 
         } else {
 
-            myDbManager.insertToDb(title, description, tempUri);
-            Toast.makeText(this, R.string.saved, Toast.LENGTH_SHORT).show();
-            finish();
+            if(isEditState) {
+
+                AppExecuter.getInstance().getSubIO().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        myDbManager.insertToDb(title, description, tempUri);
+                    }
+                });
+
+                Toast.makeText(this, R.string.saved, Toast.LENGTH_SHORT).show();
+
+            } else {
+
+                myDbManager.updateItem(title, description, tempUri, item.getId());
+
+                Toast.makeText(this, R.string.saved, Toast.LENGTH_SHORT).show();
+
+            }
             myDbManager.closeDb();
+            finish();
         }
     }
     public void onClickDeleteImage (View view) {
@@ -110,7 +142,7 @@ public class EditActivity extends AppCompatActivity {
 
     public void onClickChooseImage (View view) {
 
-        Intent chooser = new Intent (Intent.ACTION_PICK);
+        Intent chooser = new Intent (Intent.ACTION_OPEN_DOCUMENT);
         chooser.setType("image/*");
         startActivityForResult(chooser, PICK_IMAGE_CODE);
     }

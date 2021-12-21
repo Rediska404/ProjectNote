@@ -18,7 +18,7 @@ import com.example.projectnote.db.MyDbManager;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainAdapter extends RecyclerView.Adapter<com.example.projectnote.adapter.MainAdapter.MyViewHolder> {
+public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MyViewHolder> {
     private Context context;
     private List<ListItem> mainArray;
 
@@ -30,8 +30,8 @@ public class MainAdapter extends RecyclerView.Adapter<com.example.projectnote.ad
 
     @NonNull
     @Override
-    public MyViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) { // функций рисует элементы в RecyclerView
-        View view = LayoutInflater.from(context).inflate(R.layout.item_list_layout,viewGroup , false);
+    public MyViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) { // функций рисует элементы в RecyclerView
+        View view = LayoutInflater.from(context).inflate(R.layout.item_list_layout,parent , false);
         return new MyViewHolder(view, context, mainArray);
     }
 

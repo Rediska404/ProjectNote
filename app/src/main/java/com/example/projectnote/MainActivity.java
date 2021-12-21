@@ -13,10 +13,15 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.SearchView;
 
+import com.example.projectnote.adapter.ListItem;
 import com.example.projectnote.adapter.MainAdapter;
+import com.example.projectnote.db.AppExecuter;
 import com.example.projectnote.db.MyDbManager;
+import com.example.projectnote.db.OnDataReceived;
 
-public class MainActivity extends AppCompatActivity {
+import java.util.List;
+
+public class MainActivity extends AppCompatActivity implements OnDataReceived {
     private MyDbManager myDbManager;
     private EditText Title, Description;
     private RecyclerView rcView;
@@ -42,8 +47,9 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public boolean onQueryTextChange(String newText) {
-                mainAdapter.updateAdapter(myDbManager.getFromDb(newText));
+            public boolean onQueryTextChange(final String newText) {
+
+                readFromDb(newText);
                 return false;
             }
         });
@@ -66,8 +72,7 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
 
         myDbManager.openDb();
-        mainAdapter.updateAdapter(myDbManager.getFromDb(""));
-
+        readFromDb("");
     }
 
 
@@ -90,8 +95,30 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int i) {
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                 mainAdapter.removeItem(viewHolder.getAdapterPosition(), myDbManager);
+            }
+        });
+    }
+
+    private  void readFromDb (final String text){
+
+        AppExecuter.getInstance().getSubIO().execute(new Runnable() {
+            @Override
+            public void run() {
+                myDbManager.getFromDb(text, MainActivity.this);
+            }
+        });
+    }
+
+
+    @Override
+    public void onReceived(List<ListItem> list) {
+
+        AppExecuter.getInstance().getMainIO().execute(new Runnable() {
+            @Override
+            public void run() {
+                mainAdapter.updateAdapter(list);
             }
         });
     }

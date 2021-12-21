@@ -37,10 +37,20 @@ public class MyDbManager {
         String selection = MyConstants._ID + "=" + id;
         db.delete(MyConstants.TABLE_NAME, selection, null);
     }
-    public List<ListItem> getFromDb(String searchText) {
-        List<ListItem> tempList = new ArrayList<>();
+
+    public void updateItem (String title, String disc, String uri ,int id){
+        String selection = MyConstants._ID + "=" + id;
+        ContentValues cv = new ContentValues();
+        cv.put(MyConstants.TITLE, title);
+        cv.put(MyConstants.DISC, disc);
+        cv.put(MyConstants.URI, uri);
+        db.update(MyConstants.TABLE_NAME,cv, selection, null);
+    }
+
+    public void getFromDb(String searchText, OnDataReceived onDataReceived) {
+        final List<ListItem> tempList = new ArrayList<>();
         String selection = MyConstants.TITLE + " like ?";
-        Cursor cursor = db.query(MyConstants.TABLE_NAME,
+        final Cursor cursor = db.query(MyConstants.TABLE_NAME,
                 null, selection, new String[]{"%" + searchText + "%"},
                 null, null, null);
 
@@ -58,7 +68,7 @@ public class MyDbManager {
             tempList.add(item);
         }
         cursor.close();
-        return tempList;
+        onDataReceived.onReceived(tempList);
     }
 
     public void closeDb() {
